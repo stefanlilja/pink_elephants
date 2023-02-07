@@ -4,7 +4,7 @@ import os
 curr_path = os.path.dirname(os.path.realpath(__file__))
 work_dir = curr_path + '/data/'
 
-df = pd.read_csv('ThermochronTracking Elephants Kruger 2007.csv')
+df = pd.read_csv(work_dir + 'ThermochronTracking Elephants Kruger 2007.csv')
 
 df = df.rename(
     columns={'tag-local-identifier': 'tag_id',
@@ -27,7 +27,6 @@ df_db = df_new.drop(
              'study-name',
              'date',
              'time'])
-print(df_db)
 
 
 df_db.to_csv(work_dir + 'cleansed_elephants.csv')
