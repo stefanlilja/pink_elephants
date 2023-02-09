@@ -13,12 +13,7 @@ with engine.connect() as conn:
     df_main = pd.read_sql_table('location_ping', conn)
     df_time = pd.read_sql_table('time', conn)
 
-# pd.set_option('display.expand_frame_repr', False)
-
 app = Dash(__name__)
-
-list = ['AM105', 'AM107']
-df_1 = df_main.query(f'tag_id in {list}')
 
 df_year_month = df_time[['year', 'month']].drop_duplicates().reset_index(drop=True)
 
@@ -31,7 +26,12 @@ app.layout = html.Div([
             ['AM105'],
             multi=True,
             placeholder="Select a group",
-            id='group-dropdown'
+            id='group-dropdown',
+            style={
+                'width': '45%',
+                'alignment': 'right',
+                'display': 'inline-block'
+            }
         )
     ]),
 
@@ -70,6 +70,17 @@ app.layout = html.Div([
             24: 'Aug'
         },
         id='my-range-slider'
+    ),
+    dcc.RangeSlider(
+        1,
+        31,
+        1,
+        value=[10, 20],
+        id='day-slider',
+        tooltip={
+            "placement": "bottom",
+            "always_visible": True
+        }
     )
 ])
 
@@ -78,16 +89,27 @@ app.layout = html.Div([
 @app.callback(
     Output('graph-with-slider', 'figure'),
     [Input('my-range-slider', 'value'),
-     Input('group-dropdown', 'value')]
+     Input('group-dropdown', 'value'),
+     Input('day-slider', 'value')]
 )
-def update_figure(range_selector, group_selector):
+def update_figure(range_selector, group_selector, day_selector):
     min_year, min_month = df_year_month.iloc[range_selector[0]]
     max_year, max_month = df_year_month.iloc[range_selector[1]]
-    df_2 = (df_main.loc[df_main.time_stamp >= f'{min_year}-{min_month:0}-01 00:00:00']
-                   .loc[df_main.time_stamp <= f'{max_year}-{max_month:0}-01 00:00:00']
-                   .query(f'tag_id in {group_selector}'))
 
-    fig = px.scatter_mapbox(df_2, lat='latitude', lon='longitude', color='tag_id', width=1500, height=550)
+    df_2 = (df_main.loc[df_main.time_stamp >= f'{min_year}-{min_month:02}-{day_selector[0]:02} 00:00:00']
+            .loc[df_main.time_stamp <= f'{max_year}-{max_month:02}-{day_selector[1]:02} 23:59:00']
+            .query(f'tag_id in {group_selector}')
+            )
+
+    fig = px.line_mapbox(
+        df_2,
+        lat='latitude',
+        lon='longitude',
+        color='tag_id',
+        width=1500,
+        height=550,
+        hover_data=['temperature']
+    )
     fig.update_layout(mapbox_style='stamen-terrain')
     fig.update_layout(margin={'r': 0, 'l': 0, 't': 0, 'b': 0})
 
