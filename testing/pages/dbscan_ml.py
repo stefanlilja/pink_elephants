@@ -1,16 +1,17 @@
 import dash
-from dash import html, dcc, callback, Output, Input
+from dash import html, dcc
+import dash_bootstrap_components as dbc
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from datetime import datetime
-from testing.read_from_db import read_from_db
+from pythonProject.testing.read_from_db import read_from_db
 import numpy as np
 from sklearn.cluster import DBSCAN
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 
 # dash things
-dash.register_page(__name__, path='/dbscan-ml')
+dash.register_page(__name__)
 
 # pd.set_option('display.expand_frame_repr', False)
 df1, df2 = read_from_db()
@@ -63,7 +64,6 @@ AM105_dry['core_samples_mask'] = dry_core_samples_mask
 # create color spectrum
 colors_dry = [plt.cm.Spectral(each) for each in np.linspace(0, 1, len(dry_unique_labels))]
 colors_rain = [plt.cm.Spectral(each) for each in np.linspace(0, 1, len(rain_unique_labels))]
-
 
 fig_rain = go.Figure()
 fig_dry = go.Figure()
@@ -205,28 +205,46 @@ for k, col in zip(dry_unique_labels, colors_dry):
         hoverinfo='text',
     ))
 
-
 fig_dry.update_layout(mapbox_style="stamen-terrain")
 fig_dry.update_layout(showlegend=False)
-fig_dry.update_layout(margin={"r": 20, "t": 0, "l": 20, "b": 0},
+fig_dry.update_layout(margin={"r": 20, "l": 20, "t": 0, "b": 0},
                       mapbox={'center': go.layout.mapbox.Center(lat=-24.8, lon=32), 'zoom': 8})
 
-layout = html.Div(children=[
-    html.H4(children='This is our DBSCAN analytics page'),
+layout = html.Div(
+    style={'textAlign': 'center'},
+    children=[
+        html.H4(children='This is our DBSCAN analytics page'),
 
-    html.Div(children='''
-        This is our DBSCAN analytics page content.
-    '''),
-    html.Div(children=[
-        dcc.Graph(
-            id='db_graph_rain',
-            figure=fig_rain,
-            style={'display': 'inline-block'}
-        ),
-        dcc.Graph(
-            id='db_graph_dry',
-            figure=fig_dry,
-            style={'display': 'inline-block'}
-        ),
-    ], style={'align': 'center'}),
-])
+        html.Div(children=[
+            dcc.Dropdown(
+                ['AM105', 'AM107', 'AM108', 'AM110', 'AM239', 'AM253', 'AM254',
+                 'AM255', 'AM306', 'AM307', 'AM308', 'AM91', 'AM93', 'AM99'],
+                ['AM105'],
+                multi=True,
+                placeholder="Select a group",
+                id='group-dropdown',
+                style={
+                    'width': '45%',
+                    'alignment': 'right',
+                    'display': 'inline-block'
+                }
+            )
+        ]),
+        html.Br(),
+
+        html.Div(children=[
+            html.Div(children=[
+                html.H6('Rain season vs. Dry season'),
+                dcc.Graph(
+                    id='db_graph_rain',
+                    figure=fig_rain,
+                    style={'display': 'inline-block'}
+                ),
+                dcc.Graph(
+                    id='db_graph_dry',
+                    figure=fig_dry,
+                    style={'display': 'inline-block'}
+                ),
+            ]),
+        ]),
+    ])
