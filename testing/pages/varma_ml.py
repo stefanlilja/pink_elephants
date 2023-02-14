@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from statsmodels.tsa.statespace.varmax import VARMAX, VARMAXResults
-from read_from_db import read_from_db
+from testing.read_from_db import read_from_db
 
 df_main, df_time = read_from_db()
 df_merged = pd.merge(df_main, df_time, how='left', on='time_stamp')
@@ -26,7 +26,7 @@ layout = html.Div(children=[
     ]),
     html.Br(),
     dcc.Graph(id='graph')
-])
+], style={'textAlign': 'center', 'margin': 'auto'})
 
 
 

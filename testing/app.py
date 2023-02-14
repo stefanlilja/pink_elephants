@@ -2,7 +2,7 @@ import dash as dash
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-app = dash.Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.CERULEAN])
+app = dash.Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.CERULEAN], suppress_callback_exceptions=True)
 
 app.layout = html.Div([
     dbc.Row([
@@ -23,9 +23,6 @@ app.layout = html.Div([
         ),
         # dbc.Col(width=3),
     ]),
-    # html.Div(children=[
-    #     dbc.CardImg(src='elephant.png', style={"width": "9rem"}),
-    #     html.H1('Project Pink Elephant', style={'textAlign': 'center', 'color': 'hotpink'})]),
     html.Hr(),
     html.Div(
         [
@@ -43,8 +40,8 @@ app.layout = html.Div([
                 color="primary"
             ),
             dbc.Button(
-                "VARMAX ML model/forecasting",
-                href="/varmax-ml",
+                "VARMA model/forecasting",
+                href="/varma-ml",
                 color="primary",
             ),
 

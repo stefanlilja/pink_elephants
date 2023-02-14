@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from datetime import datetime
-from pythonProject.testing.read_from_db import read_from_db
+from testing.read_from_db import read_from_db
 import numpy as np
 from sklearn.cluster import DBSCAN
 import plotly.graph_objects as go
@@ -137,7 +137,12 @@ for k, col in zip(rain_unique_labels, colors_rain):
 fig_rain.update_layout(showlegend=False)
 fig_rain.update_layout(mapbox_style="stamen-terrain")
 fig_rain.update_layout(margin={"r": 20, "t": 0, "l": 20, "b": 0},
-                       mapbox={'center': go.layout.mapbox.Center(lat=-24.8, lon=32), 'zoom': 8})
+                       mapbox={
+                           'center': go.layout.mapbox.Center(
+                               lat=AM105_rain['latitude'].mean(),
+                               lon=AM105_rain['longitude'].mean()),
+                           'zoom': 8.05
+                       })
 
 # dry season plot
 for k, col in zip(dry_unique_labels, colors_dry):
@@ -208,7 +213,12 @@ for k, col in zip(dry_unique_labels, colors_dry):
 fig_dry.update_layout(mapbox_style="stamen-terrain")
 fig_dry.update_layout(showlegend=False)
 fig_dry.update_layout(margin={"r": 20, "l": 20, "t": 0, "b": 0},
-                      mapbox={'center': go.layout.mapbox.Center(lat=-24.8, lon=32), 'zoom': 8})
+                      mapbox={
+                          'center': go.layout.mapbox.Center(
+                              lat=AM105_dry['latitude'].mean(),
+                              lon=AM105_dry['longitude'].mean()),
+                          'zoom': 8.05
+                      })
 
 layout = html.Div(
     style={'textAlign': 'center'},
