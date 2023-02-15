@@ -2,27 +2,36 @@ import dash as dash
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-app = dash.Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.CERULEAN], suppress_callback_exceptions=True)
+app = dash.Dash(
+    __name__,
+    use_pages=True,
+    external_stylesheets=[dbc.themes.CERULEAN]
+)
 
 app.layout = html.Div([
-    dbc.Row([
-        dbc.Col(width=4),
+    dbc.Row(children=[
+        dbc.Col(width=3),
         dbc.Col(
-            html.H1(children=['Project Pink Elephant'], style={'color': 'hotpink'}),
-            width=3,
+            html.Div(
+                html.Img(src="assets/elephant.png", style={'height': '25%', 'width': '25%'}),
+                style={"float": "left"}
+            )
+        ),
+        dbc.Col(
+            html.H2(children=['Project Pink Elephant'], style={'color': 'hotpink'}),
+            width=2,
             style={
                 "textAlign": "center",
-                # plus your style for the fonts, etc...
             }
         ),
         dbc.Col(
             html.Div(
-                html.Img(src="assets/elephant.png", style={'height': '25%', 'width': '25%'}),
-                style={"float": "left"}  # one of many approaches...
+                html.Img(src="assets/elephant the other way.png", style={'height': '25%', 'width': '25%'}),
+                style={"float": "right"}
             )
         ),
-        # dbc.Col(width=3),
-    ]),
+        dbc.Col(width=3),
+    ], style={"textAlign": "center"}),
     html.Hr(),
     html.Div(
         [
@@ -33,24 +42,24 @@ app.layout = html.Div([
         ], style={'display': 'none'}
     ),
     html.Div(children=[
-        dbc.ButtonGroup([
-            dbc.Button(
-                "Elephant tracking",
-                href="/",
-                color="primary"
-            ),
-            dbc.Button(
-                "VARMA model/forecasting",
-                href="/varma-ml",
-                color="primary",
-            ),
-
-            dbc.Button(
-                "DBSCAN Clustering model",
-                href="/dbscan-ml",
-                color="primary"
-            )
-        ],
+        dbc.ButtonGroup(
+            [
+                dbc.Button(
+                    "Elephant tracking",
+                    href="/",
+                    color="primary"
+                ),
+                dbc.Button(
+                    "VARMA model/forecasting",
+                    href="/varma-ml",
+                    color="primary",
+                ),
+                dbc.Button(
+                    "DBSCAN Clustering model",
+                    href="/dbscan-ml",
+                    color="primary"
+                )
+            ],
             size="lg",
             className="me-1",
         ),

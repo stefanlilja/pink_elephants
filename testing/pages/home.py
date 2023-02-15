@@ -1,4 +1,4 @@
-import dash
+import dash, dash_bootstrap_components as dbc
 from dash import dcc, html, Input, Output, callback
 import plotly.express as px
 from sqlalchemy import create_engine
@@ -40,10 +40,17 @@ layout = html.Div([
                     )
                 ]),
 
-            dcc.Graph(
-                id='graph-with-slider'
+            html.Div(
+                html.Div(
+                    dcc.Graph(
+                        id='graph-with-slider'
+                    ),
+                    style={
+                        "width": "90%",
+                        "height": "90%",
+                    },
+                ), style={"display": "inline-block"}
             ),
-
             dcc.RangeSlider(
                 df_year_month.index.min(),
                 df_year_month.index.max(),
@@ -121,11 +128,21 @@ def output_callbacks(range_selector, group_selector, day_selector, pathname):
             lat='latitude',
             lon='longitude',
             color='tag_id',
-            width=1500,
-            height=550,
+            width=1000,
+            height=650,
             hover_data=['temperature']
         )
         fig.update_layout(mapbox_style='stamen-terrain')
+        fig.update_layout(legend_title_text='Elephant Group')
+        fig.update_layout(
+            legend=dict(
+                yanchor="top",
+                y=0.99,
+                xanchor="left",
+                x=0.01,
+                bgcolor="rgba(231, 247, 246, 0.8)"
+            )
+        )
         fig.update_layout(margin={"r": 0, "l": 0, "t": 0, "b": 0})
 
         return fig
