@@ -1,94 +1,153 @@
 import dash
-from dash import html, dcc, callback, Input, Output
+from dash import html, dcc, callback, Input, Output, ctx
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from statsmodels.tsa.statespace.varmax import VARMAX, VARMAXResults
-from testing.read_from_db import read_from_db
 
-df_main, df_time = read_from_db()
-df_merged = pd.merge(df_main, df_time, how='left', on='time_stamp')
-df_merged = df_merged[['latitude', 'longitude', 'temperature', 'tag_id', 'year', 'month', 'day']]
-df_daily_avg = df_merged.groupby(by=['tag_id', 'year', 'month', 'day']).mean()
-df_daily_avg.reset_index(inplace=True)
+
+df_pivoted = pd.read_csv('./data/ML/pivoted_data.csv', header=[0,1])
+model_fit = VARMAXResults.load('./data/ML/varma_2_1_model')
 
 dash.register_page(__name__)
 
 layout = html.Div(children=[
     html.H1(children='Time series forecasting'),
-    html.Div([
-        "Select mode: ",
-        dcc.RadioItems(['Modelling', 'Forecast'],
-                       'Modelling',
-                       id='analytics-input',
-                       labelStyle={'display': 'block'}
-        )
-    ]),
-    html.Br(),
+    html.Div(
+        [
+            html.Div(), #used as padding
+            html.Div(),
+            html.Div(
+                [
+                    "Select mode: ",
+                    dcc.RadioItems(
+                        ['Modelling', 'Forecasting'],
+                        'Modelling',
+                        id='radio_items',
+                        labelStyle={'display': 'block'}
+                    )
+                ], 
+                style={'display': 'block'}
+            ),
+            html.Div(
+                [
+                    "Select elephant tag: ",
+                    dcc.Dropdown(
+                        options=['AM91', 'AM93', 'AM99'],
+                        value='AM91',
+                        id='group-dropdown',
+                        style={'display': 'block'}
+                    )
+                ], 
+                style={'display': 'block'}
+            ),
+            html.Div(
+                [
+                    'Select number of days:',
+                    dcc.Input(
+                        id='day_counter',
+                        type='number',
+                        value=15,
+                        style={'display': 'block'}
+                    )
+                ], 
+                style={'display': 'block'}
+            ),
+            html.Div(), # used as padding
+            html.Div()
+        ],
+        style={
+            'display': 'flex', 
+            'flex-direction': 'row', 
+            'justify-content': 'space-around'
+        }
+    ),
     dcc.Graph(id='graph')
 ], style={'textAlign': 'center', 'margin': 'auto'})
 
 
 
 @callback(
-    Output(component_id='graph', component_property='figure'),
-    Input(component_id='analytics-input', component_property='value')
+    [
+        Output(component_id='graph', component_property='figure'),
+        Output(component_id='group-dropdown', component_property='value'),
+        Output(component_id='day_counter', component_property='value')
+    ],
+    [
+        Input(component_id='radio_items', component_property='value'),
+        Input(component_id='group-dropdown', component_property='value'),
+        Input(component_id='day_counter', component_property='value')
+    ]
 )
-def update_figure(mode):
-    if mode == 'Forecast':
-        df_forecast = df_daily_avg[df_daily_avg['tag_id'] == 'AM105'][['latitude','longitude', 'temperature']].iloc[:240]
-        train_data = df_forecast[:-5]
-        test_data = df_forecast[-5:]
-        model_fit = VARMAXResults.load('./data/ML/varma_forecast_1')
-        yhat = model_fit.forecast(steps = len(test_data))
+def update_figure(mode, tag_used, n_days):
+    
+    # when radio items are used to switch mode, we set certain defaul values
+    if ctx.triggered_id == 'radio_items':
+        tag_used = 'AM91'
+        if mode == 'Forecasting':
+            n_days = 3
+        else:
+            n_days = 15
+
+    if mode == 'Forecasting':
+        lag = 7
+        split_index = int(len(df_pivoted)*0.9)
+        real_data = df_pivoted.iloc[split_index-lag:split_index+n_days][tag_used]
+        forecast = model_fit.forecast(steps=n_days)
+
         fig = go.Figure(go.Scattermapbox(
             name = 'Training data',
             mode = "markers+lines",
-            lon = df_forecast['longitude'].iloc[225:236],
-            lat = df_forecast['latitude'].iloc[225:236],
-            marker = {'size': 10}))
+            lon = real_data['longitude'],
+            lat = real_data['latitude'],
+            marker = {'size': 10}
+        ))
 
         fig.add_trace(go.Scattermapbox(
             name = 'Forecast',
             mode = "markers+lines",
-            lon = yhat['longitude'],
-            lat = yhat['latitude'],
+            lon = forecast[f'{tag_used}_longitude'],
+            lat = forecast[f'{tag_used}_latitude'],
             marker = {'size': 10}
-            ))
+        ))
 
         fig.add_trace(go.Scattermapbox(
             name = 'True path',
             mode = "markers+lines",
-            lon = test_data['longitude'],
-            lat = test_data['latitude'],
-            marker = {'size': 10}))
+            lon = real_data.iloc[lag:]['longitude'],
+            lat = real_data.iloc[lag:]['latitude'],
+            marker = {'size': 10}
+        ))
 
         fig.update_layout(
             margin ={'l':0,'t':0,'b':0,'r':0},
             mapbox = {
-                'center': {'lon': yhat['longitude'].mean(), 'lat': yhat['latitude'].mean()},
+                'center': 
+                    {
+                        'lon': real_data['longitude'].mean()*1/3 + forecast[f'{tag_used}_longitude'].mean()*2/3, 
+                        'lat': real_data['latitude'].mean()*1/3 + forecast[f'{tag_used}_latitude'].mean()*2/3
+                    },
                 'style': "stamen-terrain",
-                'zoom': 12})
+                'zoom': 10.5}
+        )
     else:
-
-        loaded_model = VARMAXResults.load('./data/ML/varma_1_1_AM105')
-        i = 10
-        pred = loaded_model.predict(i, i+10)
-        true_val = df_daily_avg.iloc[i:i+11]
-        fig = go.Figure()
-
-        fig.add_trace(go.Scattermapbox(
+        offset = 203 #how far into the data we start (chosen for aesthetic reasons)
+        real_data = df_pivoted[tag_used].iloc[offset:offset+n_days]
+        model_data = model_fit.predict(offset+1,offset+n_days) 
+        
+        fig = go.Figure(go.Scattermapbox(
             name = 'Real data',
             mode = "markers+lines",
-            lon = true_val['longitude'],
-            lat =  true_val['latitude'],
-            marker = {'size': 10}))
+            lon = real_data['longitude'],
+            lat = real_data['latitude'],
+            marker = {'size': 10}
+        ))
 
         fig.add_trace(go.Scattermapbox(
             name = 'Model',
             mode = "markers+lines",
-            lon = pred['longitude'],
-            lat = pred['latitude'],
+            lon = model_data[f'{tag_used}_longitude'],
+            lat = model_data[f'{tag_used}_latitude'],
             marker = {'size': 10},
             )
         )
@@ -96,8 +155,9 @@ def update_figure(mode):
         fig.update_layout(
             margin ={'l':0,'t':0,'b':0,'r':0},
             mapbox = {
-                'center': {'lon': pred['longitude'].mean(), 'lat': pred['latitude'].mean()},
+                'center': {'lon': real_data['longitude'].mean(), 'lat': real_data['latitude'].mean()},
                 'style': "stamen-terrain",
-                'zoom': 8.7})
+                'zoom': 10
+                })
 
-    return fig
+    return fig, tag_used, n_days
