@@ -1,8 +1,8 @@
 import dash
+from dash import html, dcc, callback, Input, Output, ctx
 import pandas as pd
 import plotly.graph_objects as go
 from statsmodels.tsa.statespace.varmax import VARMAXResults
-from dash_extensions.enrich import html, dcc, callback, Input, Output, ctx
 
 df_pivoted = pd.read_csv('./data/ML/pivoted_data.csv', header=[0, 1])
 model_fit = VARMAXResults.load('./data/ML/varma_2_1_model')
@@ -23,22 +23,26 @@ layout = html.Div(children=[
                         'Modelling',
                         id='radio_items',
                         labelStyle={'display': 'block'}
-                    )
+                    ),
+                    html.Div(id='raio_item_container')
                 ],
                 style={'display': 'block'}
             ),
-            html.Div(
-                [
-                    "Select elephant tag: ",
-                    dcc.Dropdown(
-                        options=['AM91', 'AM93', 'AM99'],
-                        value='AM91',
-                        id='group-dropdown',
-                        style={'display': 'block'}
-                    )
-                ],
-                style={'display': 'block'}
-            ),
+            html.Div(children=[
+                html.Div(
+                    [
+                        "Select elephant tag: ",
+                        dcc.Dropdown(
+                            options=['AM91', 'AM93', 'AM99'],
+                            value='AM91',
+                            id='group-dropdown',
+                            style={'display': 'block'}
+                        )
+                    ],
+                    style={'display': 'block'}
+                ),
+                html.Div(id='group_dropdown_container')
+            ]),
             html.Div(
                 [
                     'Select number of days:',
@@ -67,7 +71,7 @@ layout = html.Div(children=[
 @callback(
     [
         Output(component_id='graph', component_property='figure'),
-        Output(component_id='group-dropdown', component_property='value'),
+        Output(component_id='group_dropdown_container', component_property='children'),
         Output(component_id='day_counter', component_property='value')
     ],
     [
