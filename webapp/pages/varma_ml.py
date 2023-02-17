@@ -35,13 +35,12 @@ layout = html.Div(children=[
                         dcc.Dropdown(
                             options=['AM91', 'AM93', 'AM99'],
                             value='AM91',
-                            id='group-dropdown',
+                            id='dropdown',
                             style={'display': 'block'}
                         )
                     ],
                     style={'display': 'block'}
-                ),
-                html.Div(id='group_dropdown_container')
+                )
             ]),
             html.Div(
                 [
@@ -71,12 +70,12 @@ layout = html.Div(children=[
 @callback(
     [
         Output(component_id='graph', component_property='figure'),
-        Output(component_id='group_dropdown_container', component_property='children'),
+        Output(component_id='dropdown', component_property='value'),
         Output(component_id='day_counter', component_property='value')
     ],
     [
         Input(component_id='radio_items', component_property='value'),
-        Input(component_id='group-dropdown', component_property='value'),
+        Input(component_id='dropdown', component_property='value'),
         Input(component_id='day_counter', component_property='value')
     ]
 )
